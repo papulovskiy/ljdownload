@@ -1,6 +1,7 @@
 package main
 
 import (
+    "encoding/json"
     "flag"
     "fmt"
     // "net/http"
@@ -13,10 +14,10 @@ var seq, start, stop int
 var url_pattern string
 var output_file string
 
-type post struct {
-    url   string
-    title string
-    text  string
+type Post struct {
+    Url   string `json:"url"`
+    Title string `json:"title"`
+    Text  string `json:"text"`
 }
 
 func get_url(number int) string {
@@ -34,12 +35,16 @@ func parse(number int) {
         if url_err != nil || title_err != nil || text_err != nil {
             return
         }
-        d := post{
-            url:   url,
-            title: title,
-            text:  text,
+        d := Post{
+            Url:   url,
+            Title: title,
+            Text:  text,
         }
-        fmt.Println(d)
+        json, err := json.Marshal(d)
+        // fmt.Println(err)
+        if err == nil {
+            fmt.Printf("%s\n", json)
+        }
     }
 
 }
