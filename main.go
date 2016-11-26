@@ -92,17 +92,9 @@ func main() {
             parse(num, results)
         }(seq)
         if seq%10 == 0 {
-            wait_timeout := make(chan struct{})
-            go func() {
-                defer close(wait_timeout)
-                wg.Wait()
-            }()
-            select {
-            case <-wait_timeout:
-                time.Sleep(50 * time.Millisecond)
-            case <-time.After(5000 * time.Millisecond):
-            }
+            wg.Wait()
         }
+        time.Sleep(25 * time.Millisecond)
     }
     wg.Wait()
 }
