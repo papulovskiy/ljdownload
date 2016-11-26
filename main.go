@@ -93,7 +93,7 @@ func main() {
         }(seq)
         if seq%10 == 0 {
             wg.Wait()
-            time.Sleep(25 * time.Millisecond)
+            // time.Sleep(25 * time.Millisecond)
         }
     }
     wg.Wait()
