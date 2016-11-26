@@ -17,6 +17,7 @@ var url_pattern string
 var wg sync.WaitGroup
 
 type Post struct {
+    Id    int    `json:"id"`
     Url   string `json:"url"`
     Title string `json:"title"`
     Text  string `json:"text"`
@@ -38,6 +39,7 @@ func parse(number int, results chan string) {
             return
         }
         d := Post{
+            Id:    number,
             Url:   url,
             Title: title,
             Text:  text,
