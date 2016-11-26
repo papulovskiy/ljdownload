@@ -79,7 +79,7 @@ func main() {
         Transport: &http.Transport{
             MaxIdleConnsPerHost: 20,
         },
-        Timeout: time.Duration(10) * time.Second,
+        Timeout: time.Duration(2 * time.Second),
     }
 
     results := make(chan string, 10)
