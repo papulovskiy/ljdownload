@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "flag"
     "fmt"
+    "net/http"
     "sync"
     "time"
 
@@ -15,6 +16,8 @@ var seq, start, stop int
 var url_pattern string
 
 var wg sync.WaitGroup
+
+var client *http.Client
 
 type Post struct {
     Id    int    `json:"id"`
@@ -28,10 +31,12 @@ func get_url(number int) string {
 }
 
 func parse(number int, results chan string) {
-    doc, err := goquery.NewDocument(get_url(number))
+    response, err := client.Get(get_url(number))
     if err != nil {
-        // log.Fatal(err)
-    } else {
+        return
+    }
+    doc, err := goquery.NewDocumentFromResponse(response)
+    if err == nil {
         url, url_err := doc.Find("a.link__control").Html()
         title, title_err := doc.Find("div.article__title").Html()
         text, text_err := doc.Find("div.article__main-text").Html()
@@ -47,8 +52,6 @@ func parse(number int, results chan string) {
         json, err := json.Marshal(d)
         if err == nil {
             results <- fmt.Sprintf("%s", json)
-        } else {
-            // fmt.Println("Cannot marshal")
         }
     }
 
@@ -71,6 +74,13 @@ func main() {
     flag.Parse()
 
     seq = start
+
+    client = &http.Client{
+        Transport: &http.Transport{
+            MaxIdleConnsPerHost: 20,
+        },
+        Timeout: time.Duration(10) * time.Second,
+    }
 
     results := make(chan string, 10)
     go writer(results)
