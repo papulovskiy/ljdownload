@@ -47,6 +47,8 @@ func parse(number int, results chan string) {
         json, err := json.Marshal(d)
         if err == nil {
             results <- fmt.Sprintf("%s", json)
+        } else {
+            // fmt.Println("Cannot marshal")
         }
     }
 
@@ -80,8 +82,16 @@ func main() {
             parse(num, results)
         }(seq)
         if seq%10 == 0 {
-            wg.Wait()
-            time.Sleep(50 * time.Millisecond)
+            wait_timeout := make(chan struct{})
+            go func() {
+                defer close(wait_timeout)
+                wg.Wait()
+            }()
+            select {
+            case <-wait_timeout:
+                time.Sleep(50 * time.Millisecond)
+            case <-time.After(5000 * time.Millisecond):
+            }
         }
     }
     wg.Wait()
