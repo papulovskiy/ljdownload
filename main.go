@@ -4,15 +4,17 @@ import (
     "encoding/json"
     "flag"
     "fmt"
-    // "net/http"
-    // "strings"
+    "sync"
+    "time"
+
     "github.com/PuerkitoBio/goquery"
 )
 
 var seq, start, stop int
 
 var url_pattern string
-var output_file string
+
+var wg sync.WaitGroup
 
 type Post struct {
     Url   string `json:"url"`
@@ -24,7 +26,7 @@ func get_url(number int) string {
     return fmt.Sprintf(url_pattern, number)
 }
 
-func parse(number int) {
+func parse(number int, results chan string) {
     doc, err := goquery.NewDocument(get_url(number))
     if err != nil {
         // log.Fatal(err)
@@ -41,27 +43,44 @@ func parse(number int) {
             Text:  text,
         }
         json, err := json.Marshal(d)
-        // fmt.Println(err)
         if err == nil {
-            fmt.Printf("%s\n", json)
+            results <- fmt.Sprintf("%s", json)
         }
     }
 
 }
 
+func writer(results <-chan string) {
+    for message := range results {
+        fmt.Println(message)
+    }
+}
+
 func init() {
     flag.IntVar(&start, "start", 1, "Start post number")
-    flag.IntVar(&stop, "stop", 1, "Stop post number")
+    flag.IntVar(&stop, "stop", 350000000, "Stop post number")
 
     flag.StringVar(&url_pattern, "url", "https://ljsear.ch/savedcopy?post=%v", "URL pattern, use %v as a post number placeholder")
-    flag.StringVar(&output_file, "file", "download.json", "Output file")
 }
 
 func main() {
     flag.Parse()
 
     seq = start
-    fmt.Printf("Starting from post %v\n", seq)
 
-    parse(seq)
+    results := make(chan string, 10)
+    go writer(results)
+
+    for seq = start; seq <= stop; seq++ {
+        wg.Add(1)
+        go func(num int) {
+            defer wg.Done()
+            parse(num, results)
+        }(seq)
+        if seq%10 == 0 {
+            wg.Wait()
+            time.Sleep(100 * time.Millisecond)
+        }
+    }
+    wg.Wait()
 }
